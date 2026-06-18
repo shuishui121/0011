@@ -67,7 +67,7 @@ const initialDocument: DocumentContent = {
 };
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
-  document: null,
+  document: initialDocument,
   version: 0,
   selectedElementId: null,
   selectedConnectionId: null,
@@ -81,7 +81,22 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   localVersion: 0,
 
   setDocument: (doc, version) =>
-    set({ document: doc, version, localVersion: version, isLoading: false }),
+    set({
+      document: {
+        ...doc,
+        elements: doc.elements ?? [],
+        connections: doc.connections ?? [],
+        annotations: doc.annotations ?? [],
+        settings: {
+          gridSize: 20,
+          showGrid: true,
+          ...(doc.settings ?? {}),
+        },
+      },
+      version,
+      localVersion: version,
+      isLoading: false,
+    }),
 
   setVersion: (version) => set({ version, localVersion: version }),
 

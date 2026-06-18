@@ -141,7 +141,17 @@ def get_document(
     db: Session = Depends(get_db),
 ):
     document = get_document_with_permission(document_id, current_user, db)
-    return document
+    current_version = db.query(DocumentVersion).filter(
+        DocumentVersion.document_id == document_id,
+        DocumentVersion.version_number == document.current_version
+    ).first()
+    result = document
+    if current_version:
+        document_dict = {c.name: getattr(document, c.name) for c in document.__table__.columns}
+        document_dict["content"] = current_version.content
+        document_dict["versions"] = document.versions
+        return document_dict
+    return result
 
 
 @router.put("/{document_id}", response_model=DesignDocumentResponse)

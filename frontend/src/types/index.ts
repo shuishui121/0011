@@ -44,6 +44,7 @@ export interface DesignDocument {
   created_at: string;
   updated_at: string;
   versions?: DocumentVersion[];
+  content?: DocumentContent;
 }
 
 export interface DocumentVersion {

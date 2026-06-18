@@ -22,7 +22,7 @@ export default function CanvasEditorPage() {
   const [showPartsPanel, setShowPartsPanel] = useState(true);
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(true);
 
-  const { document: canvasContent } = useCanvasStore();
+  const { document: canvasContent, setDocument: setCanvasDocument } = useCanvasStore();
 
   useEffect(() => {
     if (documentId) {
@@ -34,6 +34,9 @@ export default function CanvasEditorPage() {
     try {
       const data = await documentsAPI.get(Number(documentId));
       setDocument(data);
+      if (data.content) {
+        setCanvasDocument(data.content, data.current_version || 0);
+      }
     } catch (error) {
       console.error("加载文档失败:", error);
     } finally {
@@ -108,16 +111,8 @@ export default function CanvasEditorPage() {
         </button>
       </header>
 
-      <div className="flex-1 flex overflow-hidden relative">
-        {showPartsPanel && (
-          <PartsLibrary
-            selectedType={selectedElementType}
-            onSelectType={setSelectedElementType}
-            onAddElement={handleAddElement}
-          />
-        )}
-
-        <div className="flex-1 relative">
+      <div className="flex-1 overflow-hidden relative">
+        <div className="absolute inset-0">
           <Toolbar
             tool={tool}
             onToolChange={setTool}
@@ -134,8 +129,20 @@ export default function CanvasEditorPage() {
           )}
         </div>
 
+        {showPartsPanel && (
+          <div className="absolute left-0 top-0 h-full z-10">
+            <PartsLibrary
+              selectedType={selectedElementType}
+              onSelectType={setSelectedElementType}
+              onAddElement={handleAddElement}
+            />
+          </div>
+        )}
+
         {showPropertiesPanel && documentId && (
-          <PropertiesPanel documentId={Number(documentId)} />
+          <div className="absolute right-0 top-0 h-full z-10">
+            <PropertiesPanel documentId={Number(documentId)} />
+          </div>
         )}
       </div>
     </div>

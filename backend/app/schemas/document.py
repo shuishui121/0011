@@ -55,6 +55,7 @@ class DesignDocumentResponse(DesignDocumentBase):
 
 class DesignDocumentDetailResponse(DesignDocumentResponse):
     versions: List[DocumentVersionResponse] = []
+    content: Optional[Dict[str, Any]] = None
 
 
 class VersionDiffResponse(BaseModel):

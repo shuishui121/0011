@@ -227,19 +227,24 @@ export default function Canvas({
     );
   }
 
-  const gridSize = document.settings.gridSize;
-  const showGrid = document.settings.showGrid;
+  const gridSize = document.settings?.gridSize ?? 20;
+  const showGrid = document.settings?.showGrid ?? true;
 
   return (
     <div
       ref={containerRef}
-      className="flex-1 relative overflow-hidden bg-slate-950"
+      className="absolute inset-0 overflow-hidden bg-slate-950"
       onWheel={handleWheel}
     >
       <svg
         ref={svgRef}
-        className="w-full h-full cursor-crosshair"
-        style={{ cursor: tool === "pan" ? (isDragging ? "grabbing" : "grab") : undefined }}
+        className="w-full h-full cursor-crosshair block"
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "block",
+          cursor: tool === "pan" ? (isDragging ? "grabbing" : "grab") : undefined,
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

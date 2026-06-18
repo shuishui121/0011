@@ -20,33 +20,34 @@ export default function PartIcon({
   selected = false,
 }: PartIconProps) {
   const strokeWidth = selected ? 3 : 2;
-  const strokeColor = selected ? "#3b82f6" : "#1e293b";
+  const strokeColor = selected ? "#3b82f6" : color;
   const fillColor = color;
+  const fillOpacity = 0.2;
 
   const renderPart = () => {
     switch (type) {
       case "gear":
-        return <GearIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <GearIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "lever":
-        return <LeverIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <LeverIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "pulley":
-        return <PulleyIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <PulleyIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "spring":
-        return <SpringIcon width={width} height={height} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <SpringIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "piston":
-        return <PistonIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <PistonIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "wheel":
-        return <WheelIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <WheelIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "box":
-        return <BoxIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <BoxIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "arrow":
-        return <ArrowIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <ArrowIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "bearing":
-        return <BearingIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <BearingIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       case "cam":
-        return <CamIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <CamIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
       default:
-        return <BoxIcon width={width} height={height} fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} />;
+        return <BoxIcon width={width} height={height} fill={fillColor} fillOpacity={fillOpacity} stroke={strokeColor} strokeWidth={strokeWidth} />;
     }
   };
 
@@ -57,7 +58,7 @@ export default function PartIcon({
   );
 }
 
-function GearIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function GearIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const cx = width / 2;
   const cy = height / 2;
   const outerR = Math.min(width, height) / 2 - 2;
@@ -91,13 +92,13 @@ function GearIcon({ width, height, fill, stroke, strokeWidth }: any) {
 
   return (
     <g>
-      <path d={path} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+      <path d={path} fill={fill} fillOpacity={fillOpacity} stroke={stroke} strokeWidth={strokeWidth} />
       <circle cx={cx} cy={cy} r={innerR * 0.5} fill="white" stroke={stroke} strokeWidth={strokeWidth} />
     </g>
   );
 }
 
-function LeverIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function LeverIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const cx = width / 2;
   const cy = height / 2;
   const barWidth = width * 0.8;
@@ -113,6 +114,7 @@ function LeverIcon({ width, height, fill, stroke, strokeWidth }: any) {
         height={barHeight}
         rx={barHeight / 2}
         fill={fill}
+        fillOpacity={fillOpacity}
         stroke={stroke}
         strokeWidth={strokeWidth}
       />
@@ -122,7 +124,7 @@ function LeverIcon({ width, height, fill, stroke, strokeWidth }: any) {
   );
 }
 
-function PulleyIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function PulleyIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const cx = width / 2;
   const cy = height / 2;
   const outerR = Math.min(width, height) / 2 - 2;
@@ -130,7 +132,7 @@ function PulleyIcon({ width, height, fill, stroke, strokeWidth }: any) {
 
   return (
     <g>
-      <circle cx={cx} cy={cy} r={outerR} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+      <circle cx={cx} cy={cy} r={outerR} fill={fill} fillOpacity={fillOpacity} stroke={stroke} strokeWidth={strokeWidth} />
       <circle cx={cx} cy={cy} r={innerR} fill="white" stroke={stroke} strokeWidth={strokeWidth} />
       <line
         x1={cx - outerR * 0.7}
@@ -152,7 +154,7 @@ function PulleyIcon({ width, height, fill, stroke, strokeWidth }: any) {
   );
 }
 
-function SpringIcon({ width, height, stroke, strokeWidth }: any) {
+function SpringIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const coils = 6;
   const coilWidth = width / coils;
   const startY = height * 0.2;
@@ -174,13 +176,13 @@ function SpringIcon({ width, height, stroke, strokeWidth }: any) {
   return (
     <g>
       <line x1={width * 0.2} y1={startY} x2={width * 0.2} y2={startY - height * 0.1} stroke={stroke} strokeWidth={strokeWidth} />
-      <path d={path} fill="none" stroke={stroke} strokeWidth={strokeWidth} />
+      <path d={path} fill={fill || "none"} fillOpacity={fill ? fillOpacity : 0} stroke={stroke} strokeWidth={strokeWidth} />
       <line x1={width * 0.8} y1={endY} x2={width * 0.8} y2={endY + height * 0.1} stroke={stroke} strokeWidth={strokeWidth} />
     </g>
   );
 }
 
-function PistonIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function PistonIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const cx = width / 2;
   const pistonWidth = width * 0.7;
   const pistonHeight = height * 0.35;
@@ -196,6 +198,7 @@ function PistonIcon({ width, height, fill, stroke, strokeWidth }: any) {
         height={pistonHeight}
         rx={4}
         fill={fill}
+        fillOpacity={fillOpacity}
         stroke={stroke}
         strokeWidth={strokeWidth}
       />
@@ -205,6 +208,7 @@ function PistonIcon({ width, height, fill, stroke, strokeWidth }: any) {
         width={rodWidth}
         height={rodHeight}
         fill={fill}
+        fillOpacity={fillOpacity}
         stroke={stroke}
         strokeWidth={strokeWidth}
       />
@@ -228,7 +232,7 @@ function PistonIcon({ width, height, fill, stroke, strokeWidth }: any) {
   );
 }
 
-function WheelIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function WheelIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const cx = width / 2;
   const cy = height / 2;
   const outerR = Math.min(width, height) / 2 - 2;
@@ -247,14 +251,14 @@ function WheelIcon({ width, height, fill, stroke, strokeWidth }: any) {
 
   return (
     <g>
-      <circle cx={cx} cy={cy} r={outerR} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+      <circle cx={cx} cy={cy} r={outerR} fill={fill} fillOpacity={fillOpacity} stroke={stroke} strokeWidth={strokeWidth} />
       {spokes}
       <circle cx={cx} cy={cy} r={innerR} fill="white" stroke={stroke} strokeWidth={strokeWidth} />
     </g>
   );
 }
 
-function BoxIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function BoxIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   return (
     <rect
       x={2}
@@ -263,13 +267,14 @@ function BoxIcon({ width, height, fill, stroke, strokeWidth }: any) {
       height={height - 4}
       rx={4}
       fill={fill}
+      fillOpacity={fillOpacity}
       stroke={stroke}
       strokeWidth={strokeWidth}
     />
   );
 }
 
-function ArrowIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function ArrowIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const arrowHeadSize = Math.min(width, height) * 0.4;
   const shaftWidth = width * 0.3;
 
@@ -286,6 +291,7 @@ function ArrowIcon({ width, height, fill, stroke, strokeWidth }: any) {
           ${width - arrowHeadSize},${height * 0.8}
         `}
         fill={fill}
+        fillOpacity={fillOpacity}
         stroke={stroke}
         strokeWidth={strokeWidth}
         strokeLinejoin="round"
@@ -294,7 +300,7 @@ function ArrowIcon({ width, height, fill, stroke, strokeWidth }: any) {
   );
 }
 
-function BearingIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function BearingIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const cx = width / 2;
   const cy = height / 2;
   const outerR = Math.min(width, height) / 2 - 2;
@@ -307,19 +313,19 @@ function BearingIcon({ width, height, fill, stroke, strokeWidth }: any) {
     const angle = (i / ballCount) * Math.PI * 2;
     const bx = cx + Math.cos(angle) * (outerR * 0.72);
     const by = cy + Math.sin(angle) * (outerR * 0.72);
-    balls.push(<circle key={i} cx={bx} cy={by} r={ballR} fill={fill} stroke={stroke} strokeWidth={strokeWidth * 0.7} />);
+    balls.push(<circle key={i} cx={bx} cy={by} r={ballR} fill={fill} fillOpacity={fillOpacity} stroke={stroke} strokeWidth={strokeWidth * 0.7} />);
   }
 
   return (
     <g>
-      <circle cx={cx} cy={cy} r={outerR} fill="none" stroke={stroke} strokeWidth={strokeWidth * 1.5} />
-      <circle cx={cx} cy={cy} r={innerR} fill="none" stroke={stroke} strokeWidth={strokeWidth * 1.5} />
+      <circle cx={cx} cy={cy} r={outerR} fill={fill} fillOpacity={fillOpacity} stroke={stroke} strokeWidth={strokeWidth * 1.5} />
+      <circle cx={cx} cy={cy} r={innerR} fill="white" stroke={stroke} strokeWidth={strokeWidth * 1.5} />
       {balls}
     </g>
   );
 }
 
-function CamIcon({ width, height, fill, stroke, strokeWidth }: any) {
+function CamIcon({ width, height, fill, fillOpacity, stroke, strokeWidth }: any) {
   const cx = width / 2;
   const cy = height / 2;
   const rx = width / 2 - 4;
@@ -327,7 +333,7 @@ function CamIcon({ width, height, fill, stroke, strokeWidth }: any) {
 
   return (
     <g>
-      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={fill} fillOpacity={fillOpacity} stroke={stroke} strokeWidth={strokeWidth} />
       <circle cx={cx * 0.5} cy={cy} r={Math.min(width, height) * 0.12} fill="white" stroke={stroke} strokeWidth={strokeWidth} />
     </g>
   );
