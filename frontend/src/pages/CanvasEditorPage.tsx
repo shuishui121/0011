@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { documentsAPI } from "@/lib/api";
-import type { DesignDocument, ElementType } from "@/types";
+import type { DesignDocument, ElementType, CanvasElement } from "@/types";
 import Canvas from "@/components/canvas/Canvas";
 import Toolbar from "@/components/canvas/Toolbar";
 import PartsLibrary from "@/components/canvas/PartsLibrary";
 import PropertiesPanel from "@/components/canvas/PropertiesPanel";
 import { ArrowLeft, Save, Menu } from "lucide-react";
 import { useCanvasStore } from "@/stores/canvasStore";
+import { useAuthStore } from "@/stores/authStore";
+import { useCollaboration } from "@/hooks/useCollaboration";
+import { computeSmartConnectionEdges, recordCombination } from "@/lib/recommendationEngine";
 
 type Tool = "select" | "pan" | "add-element" | "connect" | "annotation";
 
@@ -20,9 +23,11 @@ export default function CanvasEditorPage() {
   const [selectedElementType, setSelectedElementType] = useState<ElementType>("gear");
   const [isSaving, setIsSaving] = useState(false);
   const [showPartsPanel, setShowPartsPanel] = useState(true);
-  const [showPropertiesPanel, setShowPropertiesPanel] = useState(true);
+  const [showPropertiesPanel] = useState(true);
 
-  const { document: canvasContent, setDocument: setCanvasDocument } = useCanvasStore();
+  const { document: canvasContent, setDocument: setCanvasDocument, selectedElementIds, addConnection } = useCanvasStore();
+  const user = useAuthStore((s) => s.user);
+  const { sendOperation } = useCollaboration({ documentId: Number(documentId) || 0 });
 
   useEffect(() => {
     if (documentId) {
@@ -65,6 +70,37 @@ export default function CanvasEditorPage() {
   const handleAddElement = () => {
     setTool("add-element");
   };
+
+  const handleSmartConnect = useCallback(() => {
+    if (!canvasContent || selectedElementIds.length < 2) return;
+    const selectedEls = selectedElementIds
+      .map((id) => canvasContent.elements.find((e) => e.id === id))
+      .filter((e): e is CanvasElement => Boolean(e));
+    if (selectedEls.length < 2) return;
+
+    const edges = computeSmartConnectionEdges(selectedEls);
+    for (const edge of edges) {
+      const exists = canvasContent.connections.some(
+        (c) =>
+          (c.from === edge.from && c.to === edge.to) ||
+          (c.from === edge.to && c.to === edge.from)
+      );
+      if (!exists) {
+        const op = addConnection({
+          from: edge.from,
+          to: edge.to,
+          type: "solid",
+          label: "",
+          color: "#64748b",
+        });
+        sendOperation(op.toJSON());
+      }
+    }
+
+    if (user) {
+      recordCombination(user.id, selectedEls.map((e) => e.type));
+    }
+  }, [canvasContent, selectedElementIds, addConnection, sendOperation, user]);
 
   if (isLoading) {
     return (
@@ -116,8 +152,8 @@ export default function CanvasEditorPage() {
           <Toolbar
             tool={tool}
             onToolChange={setTool}
-            selectedElementType={selectedElementType}
-            onSelectedElementTypeChange={setSelectedElementType}
+            canSmartConnect={selectedElementIds.length >= 2}
+            onSmartConnect={handleSmartConnect}
           />
 
           {documentId && (

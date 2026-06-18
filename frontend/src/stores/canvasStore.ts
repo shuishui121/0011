@@ -6,6 +6,7 @@ import type {
   DocumentContent,
   Collaborator,
   OTOperationData,
+  ElementType,
 } from "@/types";
 import {
   OTOperation,
@@ -19,6 +20,8 @@ interface CanvasState {
   version: number;
   selectedElementId: string | null;
   selectedConnectionId: string | null;
+  selectedElementIds: string[];
+  lastAddedElement: { id: string; type: ElementType; timestamp: number } | null;
   collaborators: Collaborator[];
   canEdit: boolean;
   isLoading: boolean;
@@ -32,6 +35,10 @@ interface CanvasState {
   setVersion: (version: number) => void;
   setSelectedElement: (id: string | null) => void;
   setSelectedConnection: (id: string | null) => void;
+  setSelectedElements: (ids: string[]) => void;
+  toggleSelection: (id: string, additive?: boolean) => void;
+  clearSelection: () => void;
+  duplicateElement: (id: string, position?: { x: number; y: number }) => OTOperation;
   setCollaborators: (collaborators: Collaborator[]) => void;
   updateCollaboratorCursor: (collaborator: Collaborator) => void;
   removeCollaborator: (userId: number) => void;
@@ -71,6 +78,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   version: 0,
   selectedElementId: null,
   selectedConnectionId: null,
+  selectedElementIds: [],
+  lastAddedElement: null,
   collaborators: [],
   canEdit: false,
   isLoading: true,
@@ -100,9 +109,78 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   setVersion: (version) => set({ version, localVersion: version }),
 
-  setSelectedElement: (id) => set({ selectedElementId: id, selectedConnectionId: null }),
+  setSelectedElement: (id) =>
+    set({
+      selectedElementId: id,
+      selectedConnectionId: null,
+      selectedElementIds: id ? [id] : [],
+    }),
 
-  setSelectedConnection: (id) => set({ selectedConnectionId: id, selectedElementId: null }),
+  setSelectedConnection: (id) =>
+    set({ selectedConnectionId: id, selectedElementId: null, selectedElementIds: [] }),
+
+  setSelectedElements: (ids) =>
+    set({
+      selectedElementIds: ids,
+      selectedElementId: ids.length > 0 ? ids[ids.length - 1] : null,
+      selectedConnectionId: null,
+    }),
+
+  toggleSelection: (id, additive = false) =>
+    set((state) => {
+      const exists = state.selectedElementIds.includes(id);
+      let next: string[];
+      if (additive) {
+        next = exists
+          ? state.selectedElementIds.filter((x) => x !== id)
+          : [...state.selectedElementIds, id];
+      } else {
+        next = exists ? [] : [id];
+      }
+      return {
+        selectedElementIds: next,
+        selectedElementId: next.length > 0 ? next[next.length - 1] : null,
+        selectedConnectionId: null,
+      };
+    }),
+
+  clearSelection: () =>
+    set({ selectedElementIds: [], selectedElementId: null, selectedConnectionId: null }),
+
+  duplicateElement: (id, position) => {
+    const state = get();
+    const el = state.document?.elements.find((e) => e.id === id);
+    const newId = generateId();
+    const payload = el
+      ? {
+          type: el.type,
+          x: position ? position.x : el.x + 24,
+          y: position ? position.y : el.y + 24,
+          width: el.width,
+          height: el.height,
+          color: el.color,
+          label: el.label,
+          properties: el.properties,
+        }
+      : {
+          type: "box" as ElementType,
+          x: position ? position.x : 120,
+          y: position ? position.y : 120,
+          width: 60,
+          height: 60,
+          color: "#f59e0b",
+          label: "",
+          properties: {},
+        };
+    const op = new OTOperation("add", "element", newId, payload);
+    get().applyLocalOperation(op);
+    set({
+      selectedElementId: newId,
+      selectedElementIds: [newId],
+      lastAddedElement: { id: newId, type: payload.type, timestamp: Date.now() },
+    });
+    return op;
+  },
 
   setCollaborators: (collaborators) => set({ collaborators }),
 
@@ -140,9 +218,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   addElement: (element) => {
     const id = generateId();
-    const newElement = { ...element, id } as CanvasElement;
     const op = new OTOperation("add", "element", id, element);
     get().applyLocalOperation(op);
+    set({ lastAddedElement: { id, type: element.type, timestamp: Date.now() } });
     return op;
   },
 

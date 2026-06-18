@@ -1,5 +1,4 @@
-import { MousePointer2, Hand, Plug, Type, ZoomIn, ZoomOut, Grid3X3 } from "lucide-react";
-import type { ElementType } from "@/types";
+import { MousePointer2, Hand, Plug, Type, ZoomIn, ZoomOut, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCanvasStore } from "@/stores/canvasStore";
 
@@ -8,15 +7,15 @@ type Tool = "select" | "pan" | "add-element" | "connect" | "annotation";
 interface ToolbarProps {
   tool: Tool;
   onToolChange: (tool: Tool) => void;
-  selectedElementType: ElementType;
-  onSelectedElementTypeChange: (type: ElementType) => void;
+  canSmartConnect: boolean;
+  onSmartConnect: () => void;
 }
 
 export default function Toolbar({
   tool,
   onToolChange,
-  selectedElementType,
-  onSelectedElementTypeChange,
+  canSmartConnect,
+  onSmartConnect,
 }: ToolbarProps) {
   const { zoom, setZoom } = useCanvasStore();
 
@@ -48,6 +47,24 @@ export default function Toolbar({
           </button>
         );
       })}
+
+      <button
+        onClick={onSmartConnect}
+        disabled={!canSmartConnect}
+        className={cn(
+          "p-2.5 rounded-lg transition-colors",
+          canSmartConnect
+            ? "text-emerald-400 hover:text-emerald-300 hover:bg-slate-800"
+            : "text-slate-600 cursor-not-allowed"
+        )}
+        title={
+          canSmartConnect
+            ? "智能连接：按传动关系自动连接选中零件"
+            : "选中 2 个及以上零件后可智能连接"
+        }
+      >
+        <Zap className="w-5 h-5" />
+      </button>
 
       <div className="w-px h-6 bg-slate-700 mx-1" />
 

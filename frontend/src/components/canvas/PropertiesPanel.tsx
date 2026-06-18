@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCanvasStore } from "@/stores/canvasStore";
+import type { CanvasElement } from "@/types";
 import {
   Settings,
   History,
@@ -9,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import VersionPanel from "./VersionPanel";
 import CommentsPanel from "./CommentsPanel";
+import SuggestionPanel from "./SuggestionPanel";
 import { useCollaboration } from "@/hooks/useCollaboration";
 
 interface Props {
@@ -32,7 +34,7 @@ export default function PropertiesPanel({ documentId }: Props) {
     { id: "collaborators", icon: Users, label: "协作" },
   ];
 
-  const handleUpdateElement = (id: string, data: any) => {
+  const handleUpdateElement = (id: string, data: Partial<CanvasElement>) => {
     const op = updateElement(id, data);
     sendOperation(op.toJSON());
   };
@@ -61,7 +63,7 @@ export default function PropertiesPanel({ documentId }: Props) {
         })}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {activeTab === "properties" && (
           <div className="p-4 space-y-4">
             {selectedElement ? (
@@ -201,6 +203,8 @@ export default function PropertiesPanel({ documentId }: Props) {
           </div>
         )}
       </div>
+
+      <SuggestionPanel documentId={documentId} />
     </div>
   );
 }

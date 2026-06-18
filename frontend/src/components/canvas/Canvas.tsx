@@ -1,10 +1,11 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { useCanvasStore } from "@/stores/canvasStore";
-import type { CanvasElement, Connection, Annotation, ElementType } from "@/types";
+import type { CanvasElement, ElementType } from "@/types";
 import PartIcon from "./PartIcon";
 import CollaborationCursors from "./CollaborationCursors";
 import { useCollaboration } from "@/hooks/useCollaboration";
 import { useAuthStore } from "@/stores/authStore";
+import { recordAdd } from "@/lib/recommendationEngine";
 
 interface CanvasProps {
   documentId: number;
@@ -27,18 +28,25 @@ export default function Canvas({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const recentDuplicatesRef = useRef<
+    { id: string; type: ElementType; x: number; y: number; t: number }[]
+  >([]);
 
   const {
     document,
     zoom,
     panOffset,
     selectedElementId,
+    selectedElementIds,
     setZoom,
     setPanOffset,
     setSelectedElement,
+    toggleSelection,
+    clearSelection,
     addElement,
     updateElement,
     deleteElement,
+    duplicateElement,
     addConnection,
     addAnnotation,
   } = useCanvasStore();
@@ -59,6 +67,35 @@ export default function Canvas({
     },
     [zoom, panOffset]
   );
+
+  const handleDuplicate = useCallback(() => {
+    if (!document || !selectedElementId) return;
+    const el = document.elements.find((e) => e.id === selectedElementId);
+    if (!el) return;
+
+    const now = Date.now();
+    const recent = recentDuplicatesRef.current;
+    const last = recent[recent.length - 1];
+    const isContinuous = last && last.type === el.type && now - last.t < 5000;
+    const newRecent = isContinuous
+      ? [...recent, { id: el.id, type: el.type, x: el.x, y: el.y, t: now }]
+      : [{ id: el.id, type: el.type, x: el.x, y: el.y, t: now }];
+    recentDuplicatesRef.current = newRecent;
+
+    let position: { x: number; y: number } | undefined;
+    if (newRecent.length >= 3) {
+      const lastSrc = newRecent[newRecent.length - 1];
+      const prevSrc = newRecent[newRecent.length - 2];
+      position = {
+        x: 2 * lastSrc.x - prevSrc.x,
+        y: 2 * lastSrc.y - prevSrc.y,
+      };
+    }
+
+    const op = duplicateElement(el.id, position);
+    sendOperation(op.toJSON());
+    if (user) recordAdd(user.id, el.type);
+  }, [document, selectedElementId, duplicateElement, sendOperation, user]);
 
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
@@ -94,7 +131,11 @@ export default function Canvas({
     if (tool === "select") {
       const clickedElement = findElementAtPoint(point.x, point.y);
       if (clickedElement) {
-        setSelectedElement(clickedElement.id);
+        if (e.shiftKey) {
+          toggleSelection(clickedElement.id, true);
+        } else {
+          setSelectedElement(clickedElement.id);
+        }
         setIsDragging(true);
         setDragElementId(clickedElement.id);
         setDragOffset({
@@ -102,7 +143,7 @@ export default function Canvas({
           y: point.y - clickedElement.y,
         });
       } else {
-        setSelectedElement(null);
+        clearSelection();
       }
       return;
     }
@@ -120,6 +161,7 @@ export default function Canvas({
         properties: {},
       });
       sendOperation(op.toJSON());
+      if (user) recordAdd(user.id, selectedElementType);
       return;
     }
 
@@ -198,15 +240,47 @@ export default function Canvas({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Delete" || e.key === "Backspace") {
+      const target = e.target as HTMLElement | null;
+      const isEditingText =
+        !!target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (isEditingText) return;
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === "d" || e.key === "D")) {
+        e.preventDefault();
         if (selectedElementId) {
-          const op = deleteElement(selectedElementId);
-          sendOperation(op.toJSON());
-          setSelectedElement(null);
+          handleDuplicate();
+        }
+        return;
+      }
+
+      if (e.key === "Delete" || e.key === "Backspace") {
+        const ids =
+          selectedElementIds.length > 0
+            ? selectedElementIds
+            : selectedElementId
+            ? [selectedElementId]
+            : [];
+        if (ids.length > 0) {
+          e.preventDefault();
+          for (const id of ids) {
+            const op = deleteElement(id);
+            sendOperation(op.toJSON());
+          }
+          clearSelection();
         }
       }
     },
-    [selectedElementId, deleteElement, sendOperation, setSelectedElement]
+    [
+      selectedElementId,
+      selectedElementIds,
+      deleteElement,
+      sendOperation,
+      handleDuplicate,
+      clearSelection,
+    ]
   );
 
   useEffect(() => {
@@ -357,7 +431,7 @@ export default function Canvas({
                 width={element.width}
                 height={element.height}
                 color={element.color}
-                selected={selectedElementId === element.id}
+                selected={selectedElementIds.includes(element.id)}
               />
               {element.label && (
                 <text
@@ -370,7 +444,7 @@ export default function Canvas({
                   {element.label}
                 </text>
               )}
-              {selectedElementId === element.id && (
+              {selectedElementIds.includes(element.id) && (
                 <rect
                   x={element.x - 4}
                   y={element.y - 4}
