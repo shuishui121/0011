@@ -22,7 +22,7 @@ from app.api.deps.auth import (
     get_user_project_role,
 )
 
-router = APIRouter(tags=["设计文档"])
+router = APIRouter(prefix="/documents", tags=["设计文档"])
 
 
 def get_document_with_permission(
@@ -50,11 +50,38 @@ def get_document_with_permission(
     return document
 
 
-@router.get("/projects/{project_id}/documents", response_model=List[DesignDocumentResponse])
+def _get_project_with_permission(
+    project_id: int,
+    current_user: User,
+    db: Session,
+    min_role: str = ProjectRole.VIEWER,
+) -> Project:
+    from app.api.deps.auth import get_user_project_role
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+
+    user_role = get_user_project_role(project_id, current_user.id, db)
+    if not user_role:
+        raise HTTPException(status_code=403, detail="没有项目访问权限")
+
+    role_hierarchy = {
+        ProjectRole.VIEWER: 1,
+        ProjectRole.EDITOR: 2,
+        ProjectRole.ADMIN: 3,
+    }
+    if role_hierarchy.get(user_role, 0) < role_hierarchy.get(min_role, 0):
+        raise HTTPException(status_code=403, detail="权限不足")
+    return project
+
+
+@router.get("/project/{project_id}", response_model=List[DesignDocumentResponse])
 def list_documents(
-    project: Project = Depends(require_project_role(ProjectRole.VIEWER)),
+    project_id: int = Path(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
+    project = _get_project_with_permission(project_id, current_user, db, ProjectRole.VIEWER)
     documents = (
         db.query(DesignDocument)
         .filter(DesignDocument.project_id == project.id)
@@ -65,16 +92,17 @@ def list_documents(
 
 
 @router.post(
-    "/projects/{project_id}/documents",
+    "/project/{project_id}",
     response_model=DesignDocumentResponse,
     status_code=status.HTTP_201_CREATED,
 )
 def create_document(
     doc_data: DesignDocumentCreate,
-    project: Project = Depends(require_project_role(ProjectRole.EDITOR)),
+    project_id: int = Path(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    project = _get_project_with_permission(project_id, current_user, db, ProjectRole.EDITOR)
     document = DesignDocument(
         project_id=project.id,
         name=doc_data.name,
@@ -106,7 +134,7 @@ def create_document(
     return document
 
 
-@router.get("/documents/{document_id}", response_model=DesignDocumentDetailResponse)
+@router.get("/{document_id}", response_model=DesignDocumentDetailResponse)
 def get_document(
     document_id: int = Path(...),
     current_user: User = Depends(get_current_active_user),
@@ -116,7 +144,7 @@ def get_document(
     return document
 
 
-@router.put("/documents/{document_id}", response_model=DesignDocumentResponse)
+@router.put("/{document_id}", response_model=DesignDocumentResponse)
 def update_document(
     doc_data: DesignDocumentUpdate,
     document_id: int = Path(...),
@@ -135,7 +163,7 @@ def update_document(
     return document
 
 
-@router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(
     document_id: int = Path(...),
     current_user: User = Depends(get_current_active_user),
@@ -147,7 +175,7 @@ def delete_document(
     return None
 
 
-@router.get("/documents/{document_id}/versions", response_model=List[DocumentVersionResponse])
+@router.get("/{document_id}/versions", response_model=List[DocumentVersionResponse])
 def list_versions(
     document_id: int = Path(...),
     current_user: User = Depends(get_current_active_user),
@@ -157,7 +185,7 @@ def list_versions(
     return document.versions
 
 
-@router.get("/documents/{document_id}/versions/{version_number}", response_model=DocumentVersionDetailResponse)
+@router.get("/{document_id}/versions/{version_number}", response_model=DocumentVersionDetailResponse)
 def get_version(
     document_id: int,
     version_number: int,
@@ -179,7 +207,7 @@ def get_version(
 
 
 @router.post(
-    "/documents/{document_id}/versions",
+    "/{document_id}/versions",
     response_model=DocumentVersionResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -206,7 +234,7 @@ def create_version(
     return version
 
 
-@router.post("/documents/{document_id}/versions/{version_number}/revert", response_model=DocumentVersionResponse)
+@router.post("/{document_id}/versions/{version_number}/revert", response_model=DocumentVersionResponse)
 def revert_to_version(
     document_id: int,
     version_number: int,
@@ -241,7 +269,7 @@ def revert_to_version(
     return new_version
 
 
-@router.get("/documents/{document_id}/versions/diff", response_model=VersionDiffResponse)
+@router.get("/{document_id}/versions/diff", response_model=VersionDiffResponse)
 def compare_versions(
     document_id: int,
     version_a: int,

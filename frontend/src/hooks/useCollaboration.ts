@@ -3,7 +3,16 @@ import { useCanvasStore } from "@/stores/canvasStore";
 import { useAuthStore } from "@/stores/authStore";
 import type { OTOperationData } from "@/types";
 
-const WS_BASE_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
+function getWsBaseUrl(): string {
+  const envUrl = import.meta.env.VITE_WS_URL;
+  if (envUrl && envUrl.length > 0) {
+    return envUrl;
+  }
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}`;
+}
+
+const WS_BASE_URL = getWsBaseUrl();
 
 interface UseCollaborationOptions {
   documentId: number;

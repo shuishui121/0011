@@ -11,7 +11,7 @@ from app.models.document import DesignDocument
 from app.schemas.comment import CommentCreate, CommentUpdate, CommentResponse
 from app.api.deps.auth import get_current_active_user, get_user_project_role
 
-router = APIRouter(tags=["评论"])
+router = APIRouter(prefix="/comments", tags=["评论"])
 
 
 def get_document_for_comments(
@@ -39,7 +39,7 @@ def get_document_for_comments(
     return document
 
 
-@router.get("/documents/{document_id}/comments", response_model=List[CommentResponse])
+@router.get("/document/{document_id}", response_model=List[CommentResponse])
 def list_comments(
     document_id: int = Path(...),
     current_user: User = Depends(get_current_active_user),
@@ -60,7 +60,7 @@ def list_comments(
 
 
 @router.post(
-    "/documents/{document_id}/comments",
+    "/document/{document_id}",
     response_model=CommentResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -90,7 +90,7 @@ def create_comment(
     return comment
 
 
-@router.put("/comments/{comment_id}", response_model=CommentResponse)
+@router.put("/{comment_id}", response_model=CommentResponse)
 def update_comment(
     comment_id: int,
     comment_data: CommentUpdate,
@@ -131,7 +131,7 @@ def update_comment(
     return comment
 
 
-@router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_comment(
     comment_id: int,
     current_user: User = Depends(get_current_active_user),

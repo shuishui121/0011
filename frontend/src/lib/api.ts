@@ -77,12 +77,12 @@ export const projectsAPI = {
 
 export const documentsAPI = {
   list: (projectId: number) =>
-    api.get<DesignDocument[]>(`/projects/${projectId}/documents`).then((r) => r.data),
+    api.get<DesignDocument[]>(`/documents/project/${projectId}`).then((r) => r.data),
 
   get: (id: number) => api.get<DesignDocument>(`/documents/${id}`).then((r) => r.data),
 
   create: (projectId: number, name: string, description?: string) =>
-    api.post<DesignDocument>(`/projects/${projectId}/documents`, { name, description }).then((r) => r.data),
+    api.post<DesignDocument>(`/documents/project/${projectId}`, { name, description }).then((r) => r.data),
 
   update: (id: number, data: { name?: string; description?: string }) =>
     api.put<DesignDocument>(`/documents/${id}`, data).then((r) => r.data),
@@ -109,10 +109,10 @@ export const documentsAPI = {
 
 export const commentsAPI = {
   list: (documentId: number) =>
-    api.get<Comment[]>(`/documents/${documentId}/comments`).then((r) => r.data),
+    api.get<Comment[]>(`/comments/document/${documentId}`).then((r) => r.data),
 
   create: (documentId: number, content: string, parentId?: number, position?: { x: number; y: number }) =>
-    api.post<Comment>(`/documents/${documentId}/comments`, {
+    api.post<Comment>(`/comments/document/${documentId}`, {
       content,
       parent_id: parentId,
       position,
